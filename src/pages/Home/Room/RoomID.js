@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Grid,
   Typography,
@@ -6,17 +6,18 @@ import {
   Card,
   Box,
   Container,
+  Hidden,
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import { useParams } from "react-router-dom";
 import { useMutation, useQuery, gql } from "@apollo/client";
 import { useSelector } from "react-redux";
 
-// Stlyed
+// Styled
 const BgRoom = styled(Card)(({ theme }) => ({
   backgroundColor: `#f4f4f4`,
+  width: `100%`,
   height: `100%`,
-  overflowY: "scroll",
 }));
 
 const BgChat = styled(Card)(({ theme }) => ({
@@ -25,7 +26,7 @@ const BgChat = styled(Card)(({ theme }) => ({
   margin: `0px 3px 0px 3px`,
 }));
 
-const StlyedTextField = styled(TextField)(({ theme }) => ({
+const StyledTextField = styled(TextField)(({ theme }) => ({
   width: `100%`,
 }));
 
@@ -34,7 +35,6 @@ const ItemChat = ({ message, isOwner }) => {
   return (
     <>
       <Typography
-        key={message.id}
         variant="chat-username"
         component={"div"}
         align={isOwner ? "right" : "left"}
@@ -50,11 +50,7 @@ const ItemChat = ({ message, isOwner }) => {
       >
         <Grid item xs={"auto"}>
           <BgChat elevation={0}>
-            <Typography
-              key={message.id}
-              variant="chat-message"
-              component={"div"}
-            >
+            <Typography variant="chat-message" component={"div"}>
               {message.body}
             </Typography>
           </BgChat>
@@ -64,19 +60,18 @@ const ItemChat = ({ message, isOwner }) => {
   );
 };
 
-//
 const GET_MESSAGES = gql`
   query GetMessages($roomName: String!) {
     messages(roomName: $roomName) {
       id
       body
-      image
       from {
         name
       }
     }
   }
 `;
+
 const SEND_MESSAGE = gql`
   mutation SendMessage($roomName: String!, $message: String!, $name: String!) {
     sendMessage(roomName: $roomName, message: $message, name: $name) {
@@ -84,17 +79,21 @@ const SEND_MESSAGE = gql`
     }
   }
 `;
+
+const POLL_INTERVAL = 5000;
+
 export function RoomID() {
   const userName = useSelector((state) => state.user.name);
 
   const { roomId } = useParams();
   const [message, setMessage] = useState("");
-  //
-  const { loading, error, data } = useQuery(GET_MESSAGES, {
+
+  const { loading, error, data, refetch } = useQuery(GET_MESSAGES, {
     variables: { roomName: roomId },
   });
 
   const [sendMessage] = useMutation(SEND_MESSAGE);
+
   const handleSendMessage = async () => {
     try {
       await sendMessage({
@@ -105,87 +104,88 @@ export function RoomID() {
         },
       });
       setMessage("");
-      console.log("Sent Message");
+      refetch();
     } catch (error) {
       console.error("Failed to send message", error);
     }
   };
+  useEffect(() => {
+    const poll = setInterval(() => {
+      refetch();
+    }, POLL_INTERVAL);
+
+    return () => {
+      clearInterval(poll); // Clean
+    };
+  }, [refetch]);
 
   if (loading) return <Typography>Loading...</Typography>;
   if (error) return <Typography>Error: {error.message}</Typography>;
 
   return (
-    <>
-      <Grid
-        sx={{ height: `100%` }}
-        container
-        direction="column"
-        alignItems="stretch"
-        justifyContent="flex-end"
-        spacing={1}
-      >
-        <Grid item xs={"auto"}>
-          <Typography variant="title" component={"div"}>
-            ห้อง {roomId}
-          </Typography>
-        </Grid>
-        <Grid item xs>
-          <BgRoom elevation={0}>
-            {/* chat-username */}
-            <Container
-              sx={{
-                my: 1,
-              }}
-            >
-              {data.messages.map((message) => (
-                <>
-                  <ItemChat
-                    key={message.id}
-                    message={message}
-                    isOwner={message.from.name === userName && !!userName}
-                  />
-                </>
-              ))}
-            </Container>
-          </BgRoom>
-        </Grid>
-        <Grid item xs={"auto"}>
-          <Box sx={{ position: `relative` }}>
-            <Grid
-              sx={{
-                position: `absolute`,
-                width: `100%`,
-                height: `100%`,
-                px: 1,
-                py: 0,
-              }}
-              container
-              direction="column"
-              alignItems="end"
-              justifyContent="end"
-            >
-              <Grid item xs={12} md={6}>
-                <Typography variant="chat-username" align="end">
-                  Enter เพื่อส่ง
-                </Typography>
-              </Grid>
-            </Grid>
-
-            <StlyedTextField
-              id="outlined-basic"
-              variant="outlined"
-              onKeyPress={(e) => {
-                if (e.key === "Enter") {
-                  handleSendMessage();
-                }
-              }}
-              type="text"
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-            />
-          </Box>
-        </Grid>
+    <Grid
+      sx={{ height: `100%`, width: "100%" }}
+      container
+      direction="column"
+      spacing={1}
+    >
+      <Grid item xs={"auto"}>
+        <Typography variant="title" component={"div"}>
+          ห้อง {roomId}
+        </Typography>
       </Grid>
-    </>
+      {/* Chat */}
+      <Grid item xs sx={{ maxHeight: `100%`, overflowY: "hidden" }}>
+        <BgRoom
+          elevation={0}
+          component={Container}
+          sx={{ overflowY: "scroll" }}
+        >
+          {data.messages.map((message) => (
+            <ItemChat
+              key={message.id}
+              message={message}
+              isOwner={message.from.name === userName && !!userName}
+            />
+          ))}
+        </BgRoom>
+      </Grid>
+      {/* Input */}
+      <Grid item xs={"auto"}>
+        <Box sx={{ position: `relative` }}>
+          <Grid
+            sx={{
+              position: `absolute`,
+              width: `100%`,
+              height: `100%`,
+              px: 1,
+              py: 0,
+            }}
+            container
+            direction="column"
+            alignItems="end"
+            justifyContent="end"
+          >
+            <Grid item xs={12} md={6}>
+              <Typography variant="chat-username">Enter เพื่อส่ง</Typography>
+            </Grid>
+          </Grid>
+          <StyledTextField
+            id="outlined-basic"
+            variant="outlined"
+            onKeyPress={(e) => {
+              if (e.key === "Enter") {
+                handleSendMessage();
+              }
+            }}
+            type="text"
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+          />
+        </Box>
+      </Grid>
+    </Grid>
   );
 }
+
+export default RoomID;
