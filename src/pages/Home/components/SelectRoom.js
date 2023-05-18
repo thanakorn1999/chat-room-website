@@ -1,5 +1,4 @@
 import React from "react";
-import styled from "styled-components";
 import { Grid, Typography, Box } from "@mui/material";
 import ThemedButtonContained from "components/ThemedButtonContained";
 import ThemedButton from "components/ThemedButton";
@@ -49,30 +48,6 @@ export function SelectRoom() {
           </Grid>
         </Grid>
       </Box>
-      {/* <Grid
-        sx={{ height: `100%` }}
-        container
-        justifyContent={"center"}
-        align={`center`}
-        direction="column"
-      >
-        <Grid item xs={"auto"}>
-          lllll
-        </Grid>
-        <Grid item xs>
-          <Grid
-            container
-            justifyContent={"center"}
-            align={`center`}
-            direction="column"
-          >
-            <Grid item xs>
-              <div>asdasd</div>
-              <div>asdasd</div>
-            </Grid>
-          </Grid>
-        </Grid>
-      </Grid> */}
     </>
   );
 }

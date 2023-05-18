@@ -1,12 +1,11 @@
-// import React from "react";
 import { Outlet } from "react-router-dom";
 import { Container, Card, Grid, CardMedia } from "@mui/material";
 import { styled } from "@mui/material/styles";
-import React from "react";
+import React, { useEffect } from "react";
 import imgBg from "assets/images/bg.jpg";
 import imgLogo from "assets/images/logo.png";
-
-// const StyledContainerCard = styled(Box)(({ theme }) => ({
+import { useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
 
 const StyledBgImage = styled(Container)(({ theme }) => ({
   background: `url(${imgBg}) no-repeat`, //no-repeat center center
@@ -20,6 +19,18 @@ const StyledCard = styled(Card)(({ theme }) => ({
   borderRadius: `20px !important`,
 }));
 export function Template() {
+  const navigate = useNavigate();
+  const userName = useSelector((state) => state.user.name);
+
+  useEffect(() => {
+    const handleJoinRoom = () => {
+      if (userName === "") {
+        navigate("/");
+      }
+    };
+    handleJoinRoom();
+  }, []);
+
   return (
     <>
       <StyledBgImage maxWidth>

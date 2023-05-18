@@ -1,10 +1,6 @@
-// import { useSelector } from "react-redux";
-// import { useMemo, useState } from "react";
-import React, { Component, useState, useMemo } from "react";
+import React, { useMemo } from "react";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
-
-const grey = "#ffffff";
 
 const getDesignTokens = (mode) => ({
   typography: {
@@ -51,7 +47,7 @@ const getDesignTokens = (mode) => ({
   },
 });
 export function ThemeProviderCostom({ children }) {
-  const [mode, setMode] = useState("light");
+  const mode = "light";
 
   const theme = useMemo(() => createTheme(getDesignTokens(mode)), [mode]);
   return (
