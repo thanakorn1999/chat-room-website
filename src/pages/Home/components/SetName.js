@@ -44,6 +44,11 @@ export function SetName() {
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
+            onKeyPress={(e) => {
+              if (e.key === "Enter") {
+                handleSetName();
+              }
+            }}
           />
         </Grid>
       </Grid>

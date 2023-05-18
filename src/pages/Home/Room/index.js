@@ -1,13 +1,32 @@
 import React, { useState } from "react";
 
-import styled from "styled-components";
-import { Button, Grid, Typography, TextField } from "@mui/material";
+import { Grid, Typography, TextField } from "@mui/material";
 import ThemedLink from "components/ThemedLink";
 import ThemedButtonContained from "components/ThemedButtonContained";
 import ThemedButton from "components/ThemedButton";
+import { useNavigate } from "react-router-dom";
+import { useQuery, gql, useMutation } from "@apollo/client";
 
+const CHECK_ROOM_EXISTENCE = gql`
+  query CheckRoomExistence($roomName: String!) {
+    roomExists(roomName: $roomName)
+  }
+`;
 export function Room() {
   const [room, setRoom] = useState("");
+  const navigate = useNavigate();
+  const { loading, error, data, refetch } = useQuery(CHECK_ROOM_EXISTENCE, {
+    variables: { roomName: room },
+  });
+
+  const handleJoinRoom = async () => {
+    await refetch();
+    if (data.roomExists) {
+      navigate(`/room/${room}`);
+    } else {
+      alert(`ไม่พบห้องหมายเลข ${room}`);
+    }
+  };
 
   return (
     <>
@@ -30,6 +49,11 @@ export function Room() {
             type="text"
             value={room}
             onChange={(e) => setRoom(e.target.value)}
+            onKeyPress={(e) => {
+              if (e.key === "Enter") {
+                handleJoinRoom();
+              }
+            }}
           />
         </Grid>
       </Grid>
@@ -50,7 +74,9 @@ export function Room() {
             variant="contained"
             size="large"
             component={ThemedLink}
-            to={`/room/${room}`}
+            onClick={() => {
+              handleJoinRoom();
+            }}
           >
             เข้าร่วม
           </ThemedButtonContained>
